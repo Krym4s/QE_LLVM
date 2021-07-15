@@ -46,4 +46,6 @@ int CreateSolveLinearEq (LLVMModuleRef module);
 int CreateSolveQuadraticEq (LLVMModuleRef module);
 
 
-int SolveEquation ();
+int SolveEquation (double x, double y, double z);
+
+int CreateOutput (int nRoots, double x, double y);

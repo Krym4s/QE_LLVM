@@ -187,11 +187,74 @@ int CreateSolveQuadraticEq (LLVMModuleRef module)
     return 0;
 }
 
-int SolveEquation ()
+int SolveEquation (double x, double y, double z)
 {
     LLVMModuleRef mod = LLVMModuleCreateWithName("quadratic_equation");
 
     CreateIsZero (mod);
     CreateSolveLinearEq (mod);
     CreateSolveQuadraticEq (mod);
+
+    char *error = NULL;
+    LLVMVerifyModule(mod, LLVMAbortProcessAction, &error);
+    LLVMDisposeMessage(error);
+
+    LLVMExecutionEngineRef engine;
+    error = NULL;
+    LLVMLinkInMCJIT();
+    LLVMInitializeNativeTarget();
+
+    LLVMWriteBitcodeToFile(mod, "sum.bc");
+
+    LLVMCreateExecutionEngineForModule(&engine, mod, &error);
+    if (error)
+    {
+        return 1;
+    }
+    
+    double t1 = 0;
+    double t2 = 0;
+
+    LLVMInitializeNativeAsmPrinter();
+
+    int (*CreateSolveQuadraticEq)(double, double, double, double*, double*) = (int (*)(double, double, double, double*, double*))LLVMGetFunctionAddress(engine, "SolveQuadraticEquation");
+    int nRoots = CreateSolveQuadraticEq (x, y, z, &t1, &t2);
+    CreateOutput (nRoots, t1, t2);
+
+    if (LLVMWriteBitcodeToFile(mod, "sum.bc") != 0) {
+        fprintf(stderr, "error writing bitcode to file, skipping\n");
+    }
+
+    LLVMDisposeExecutionEngine(engine);
+
+    return 0;
+
+}
+
+int CreateOutput (int nRoots, double x, double y)
+{
+    switch (nRoots)
+    {
+    case -1:
+        printf ("infinite roots");
+        break;
+
+    case 0:
+        printf ("no roots");
+        break;
+    
+    case 1:
+        printf ("roots: %lg", x);
+        break;
+
+    
+    case 2:
+        printf ("roots: %lg %lg", x, y);
+        break;
+    
+    default:
+        printf ("error");
+        break;
+    }
+    return 0;
 }
