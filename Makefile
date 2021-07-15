@@ -14,5 +14,8 @@ quadtratic_equation: main.o QE_LLVM.o
 QE_LLVM.o: QE_LLVM.cpp
 	$(CC) $(CFLAGS) -c QE_LLVM.cpp
 
-clean:
-	-rm -f sum.o sum sum.bc sum.ll
+sum.ll: sum.bc
+	llvm-dis $<
+
+#clean:
+#	-rm -f sum.o sum sum.bc sum.ll

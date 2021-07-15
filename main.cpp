@@ -7,6 +7,7 @@ int main(int argc, char const *argv[])
 
     CreateIsZero (mod);
     CreateSolveLinearEq (mod);
+    CreateSolveQuadraticEq (mod);
 
     char *error = NULL;
     LLVMVerifyModule(mod, LLVMAbortProcessAction, &error);
@@ -26,25 +27,34 @@ int main(int argc, char const *argv[])
         LLVMDisposeMessage(error);
         exit(EXIT_FAILURE);
     }
-
-    if (argc < 3) {
-        fprintf(stderr, "usage: %s x y\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
     double x = strtod(argv[1], NULL);
     double y = strtod(argv[2], NULL);
-    double z = 0;
+    double z = strtod(argv[3], NULL);
+    double t1 = 0;
+    double t2 = 0;
 
     LLVMInitializeNativeAsmPrinter();
 
-    //int (*sum_func)(double) = (int (*)(double))LLVMGetFunctionAddress(engine, "IsZero");
-    //printf("%d\n", sum_func(x));
-    int (*lin)(double, double, double*) = (int (*)(double, double, double*))LLVMGetFunctionAddress(engine, "SolveLinearEquation");
+    LLVMWriteBitcodeToFile(mod, "sum.bc");
+
+    int (*sv)(double) = (int (*) (double))LLVMGetFunctionAddress(engine, "IsZero");
+    printf ("test1:%d\n\n", sv(x));
+
+    int (*line)(double, double, double*) = (int (*)(double, double, double*))LLVMGetFunctionAddress(engine, "SolveLinearEquation");
     printf ("haha\n");
     fflush(stdout);
     printf ("%lg %lg\n", x, y);
-    lin (x,y, &z);
-    printf ("%d %lg\n", lin(x,y, &z), z);
+    //line (x,y, &z);
+    //printf ("%d %lg\n", line(x,y, &z), z);
+
+    //int (*sum_func)(double) = (int (*)(double))LLVMGetFunctionAddress(engine, "IsZero");
+    //printf("%d\n", sum_func(x));
+    int (*lin)(double, double, double, double*, double*) = (int (*)(double, double, double, double*, double*))LLVMGetFunctionAddress(engine, "SolveQuadraticEquation");
+    printf ("haha\n");
+    fflush(stdout);
+    printf ("%lg %lg %lg\n", x, y, z);
+    lin (x,y, z, &t1, &t2);
+    printf ("%d \n%lg %lg\n", lin (x,y, z, &t1, &t2), t1, t2);
     // Write out bitcode to file
     if (LLVMWriteBitcodeToFile(mod, "sum.bc") != 0) {
         fprintf(stderr, "error writing bitcode to file, skipping\n");
